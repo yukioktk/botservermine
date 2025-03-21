@@ -19,6 +19,7 @@ require('./botcommands/btop')(client);
 require('./botcommands/buttonconflicts')(client);
 require('./botcommands/help')(client);
 require('./botcommands/ping')(client);
+require('./botcommands/playerStatistics')(client);
 
 
 // Listner buttons

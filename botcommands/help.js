@@ -2,27 +2,39 @@ const { EmbedBuilder } = require('discord.js');
 
 module.exports = (client) => {
   client.on('messageCreate', async (message) => {
-    // Certifique-se de que a função seja declarada como assíncrona
+    // Certifique-se de que a funï¿½ï¿½o seja declarada como assï¿½ncrona
     if (message.author.bot) return;
 
     if (message.content === '!help') {
       const embed = new EmbedBuilder()
-        .setTitle("Comandos")
-        .setDescription(
-          "**status**: Detalhes dos servidores de Minecraft ||[API](https://api.mcsrvstat.us/)||\n" +
-          "**start**: Iniciar o servidor de Minecraft\n" +
-          "**stop**: Desligar o servidor de Minecraft\n" +
-          "**btop**: Monitor de recursos\n" +
-	  "**ping**: Pong"
-        )
-        .setThumbnail("https://cdn.discordapp.com/avatars/1327335734327378093/29e94dde15167e91c4d4a01556fdc338.png?size=2048")
-        .setColor("#000000")
-        .setFooter({
-          text: "_.kido",
-          iconURL: "https://cdn.discordapp.com/avatars/250691091316080640/a_30062dd7db24baa621384a435bb41307.gif?size=2048",
-        });
-
-      await message.channel.send({ embeds: [embed] });
+      .setAuthor({
+        name: "Comandos",
+      })
+      .addFields(
+        {
+          name: "Servidor de Minecraft",
+          value: "**status**: Detalhes dos servidores de Minecraft ||[API](https://api.mcsrvstat.us/)||\n**start**: Iniciar o servidor de Minecraft\n**stop**: Desligar o servidor de Minecraft",
+          inline: false
+        },
+        {
+          name: "EstatÃ­sticas Minecraft",
+          value: "**player**: Exibir as estatÃ­sticas dos jogadores\n**uuid**: Registrar um usuÃ¡rio na UUID\n**uuidmapping**: Mostrar todas as UUIDs registradas\n**uuiddelete**: Deletar um nome registrado",
+          inline: false
+        },
+        {
+          name: "MÃ¡quina",
+          value: "**btop**: Monitor de recursos\n**ping**: Pong",
+          inline: false
+        },
+      )
+      .setThumbnail("https://cdn.discordapp.com/avatars/1327335734327378093/29e94dde15167e91c4d4a01556fdc338.png?size=2048")
+      .setColor("#00b0f4")
+      .setFooter({
+        text: "_.kido",
+        iconURL: "https://cdn.discordapp.com/avatars/250691091316080640/a_30062dd7db24baa621384a435bb41307.gif?size=2048",
+      });
+    
+    await message.channel.send({ embeds: [embed] });
     }
   });
 };
