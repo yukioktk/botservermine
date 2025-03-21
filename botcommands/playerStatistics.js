@@ -106,8 +106,8 @@ if (command === '!uuidmapping') {
           .setCustomId('serverSelect')
           .setPlaceholder('Selecione o servidor')
           .addOptions([
-            { label: 'Vanilla', value: 'vanilla' },
-            { label: 'Modpack', value: 'modpack' },
+            { label: 'Vanilla', value: 'Vanilla' },
+            { label: 'Modpack', value: 'Modpack' },
           ])
       );
 
@@ -126,7 +126,7 @@ if (command === '!uuidmapping') {
 
         const selectedServer = serverInteraction.values[0];
         const basePath =
-          selectedServer === 'vanilla'
+          selectedServer === 'Vanilla'
             ? '/home/ubuntu/minecraftVanilla/world'
             : '/home/ubuntu/minecraftModpack/world';
 
