@@ -39,7 +39,7 @@ MODPACK_IP= mc.hypixel.net
 VANILLA_DIRECTORY= /home/ubuntu/minecraftVanilla
 MODPACK_DIRECTORY= /home/ubuntu/minecraftModpack
 VANILLA_SCRIPT= iniciarserver.sh
-MODPACK_SCRIPT=run.sh 
+MODPACK_SCRIPT= run.sh 
 ```
 Inicie com
 ```
