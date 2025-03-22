@@ -4,17 +4,21 @@ const fetch = require('node-fetch');
 
 require("dotenv").config();
 
-// Configura��es do bot
-const token = (process.env.BOT_TOKEN); // Substitua pelo seu token
+// Configurações do bot
+const token = (process.env.BOT_TOKEN); // Token
 const prefix = '!';
 const channelIdServerVanilla = (process.env.ID_CONSOLE_VANILLA); // Canal de log do Servidor Vanilla
 const channelIdServerMod = (process.env.ID_CONSOLE_MODPACK);   // Canal de log do Servidor Mod
 const serverVanillaIP = (process.env.VANILLA_IP);              // IP do servidor Vanilla
 const serverModIP = (process.env.MODPACK_IP);             // IP do servidor Mod
+const vanillaDirectory = (process.env.VANILLA_DIRECTORY);             // Diretório do servidor Vanilla
+const modpackDirectory = (process.env.MODPACK_DIRECTORY);             // Diretório do servidor Modpack
+const vanillaScript = (process.env.VANILLA_SCRIPT);             // Script para iniciar o servidor Vanilla (.sh)
+const modpackScript = (process.env.MODPACK_SCRIPT);             // Script para iniciar o servidor Modpack (.sh)
 
 const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] });
 
-//Pasta commands
+
 require('./botcommands/btop')(client);
 require('./botcommands/buttonconflicts')(client);
 require('./botcommands/help')(client);
@@ -24,17 +28,17 @@ require('./botcommands/playerStatistics')(client);
 
 // Listner buttons
 function handleServerButton(interaction) {
-  // ... Sua l�gica para os bot�es dos servidores ...
+  // ... Sua lógica para os botões dos servidores ...
   // Por exemplo, se interaction.customId for 'serverVanilla', etc.
 }
 
-// Definindo de forma global para ser acess�vel no buttonconflicts.js:
+// Definindo de forma global para ser acessível no buttonconflicts.js:
 global.handleServerButton = handleServerButton;
 
 
 
 
-// Vari�veis para armazenar os processos dos servidores
+// Variáveis para armazenar os processos dos servidores
 let serverVanillaProcess = null;
 let serverModProcess = null;
 
@@ -45,7 +49,7 @@ const logBuffers = {
   mod: []
 };
 
-// Fun��o para dividir mensagens longas, respeitando o limite do Discord (2000 caracteres)
+// Função para dividir mensagens longas, respeitando o limite do Discord (2000 caracteres)
 function splitMessage(content, maxLength = 2000) {
   const parts = [];
   while (content.length > maxLength) {
@@ -62,19 +66,19 @@ function splitMessage(content, maxLength = 2000) {
   return parts;
 }
 
-// Fun��o para adicionar os logs ao buffer, dividindo-os se necess�rio
+// Função para adicionar os logs ao buffer, dividindo-os se necessário
 function adicionarNoBuffer(bufferName, data) {
   const log = data.toString();
-  const parts = splitMessage(log, 1900); // margem para garantir a formata��o no bloco de c�digo
+  const parts = splitMessage(log, 1900); // margem para garantir a formatação no bloco de código
   logBuffers[bufferName].push(...parts);
 }
 
-// Fun��o para enviar os logs acumulados do buffer para o canal
+// Função para enviar os logs acumulados do buffer para o canal
 async function enviarBuffer(channel, bufferName) {
   const buffer = logBuffers[bufferName];
   if (buffer.length === 0) return;
 
-  // Agrega todas as entradas do buffer em uma �nica string
+  // Agrega todas as entradas do buffer em uma única string
   const allLogs = buffer.join('\n');
   // Limpa o buffer imediatamente para tratar novos logs
   logBuffers[bufferName] = [];
@@ -93,7 +97,7 @@ async function enviarBuffer(channel, bufferName) {
 }
 
 // --------------------------------------------------
-// Configura a codifica��o dos streams padr�o
+// Codificação utf-8
 process.stdin.setEncoding('utf8');
 process.stdout.setEncoding('utf8');
 process.stderr.setEncoding('utf8');
@@ -107,7 +111,7 @@ client.once('ready', () => {
   });
 });
 
-// Fun��o que consulta o status do servidor via API
+// Função que consulta o status do servidor via API
 async function getServerStatus(ip) {
   const response = await fetch(`https://api.mcsrvstat.us/3/${ip}`);
   const data = await response.json();
@@ -118,7 +122,7 @@ client.on('messageCreate', async (message) => {
   // Ignorar mensagens de outros bots
   if (message.author.bot) return;
 
-  // Se a mensagem n�o come�a com o prefixo, e se estiver no canal de log, redireciona ao processo correspondente
+  // Se a mensagem não começa com o prefixo, e se estiver no canal de log, redireciona ao processo correspondente
   if (!message.content.startsWith(prefix)) {
     if (message.channel.id === channelIdServerVanilla && serverVanillaProcess) {
       serverVanillaProcess.stdin.write(message.content + '\n');
@@ -178,7 +182,7 @@ client.on('messageCreate', async (message) => {
     const vanillaStatus = await getServerStatus(serverVanillaIP);
     const modStatus = await getServerStatus(serverModIP);
 
-    let embedColor = 0x00FF00; // Verde por padr�o
+    let embedColor = 0x00FF00; // Verde por padrão
     if (!vanillaStatus.online && !modStatus.online) {
       embedColor = 0xFF0000; // Vermelho se ambos estiverem offline
     }
@@ -203,7 +207,7 @@ client.on('interactionCreate', async (interaction) => {
   if (!interaction.isButton()) return;
 
     const serverButtons = ['serverVanilla', 'serverMod', 'stop_serverVanilla', 'stop_serverMod'];
-    if (!serverButtons.includes(interaction.customId)) return; // Se n�o for um desses bot�es, sai e permite que outro listener (por exemplo, o do btop) trate
+    if (!serverButtons.includes(interaction.customId)) return; // Se não for um desses botões, sai e permite que outro listener (por exemplo, o do btop) trate
 
 
   try {
@@ -211,10 +215,10 @@ client.on('interactionCreate', async (interaction) => {
     const logChannelServerMod = await client.channels.fetch(channelIdServerMod);
 
 
-    // Bot�o para iniciar o Servidor Vanilla
+    // Botão para iniciar o Servidor Vanilla
     if (interaction.customId === 'serverVanilla' && !serverVanillaProcess) {
-      const serverVanillaPath = '/home/ubuntu/minecraftVanilla';
-      const scriptName = 'iniciarserver.sh';
+      const serverVanillaPath = vanillaDirectory;
+      const scriptName = vanillaScript;
       serverVanillaProcess = spawn('bash', [scriptName], { cwd: serverVanillaPath, env: { LANG: 'en_US.UTF-8' } });
 
       await interaction.reply({ content: 'Iniciando o Servidor Vanilla...' });
@@ -231,7 +235,7 @@ client.on('interactionCreate', async (interaction) => {
 
       serverVanillaProcess.on('close', (code) => {
         serverVanillaProcess = null;
-        logChannelServerVanilla.send(`Servidor Vanilla foi encerrado com o c�digo: ${code}`);
+        logChannelServerVanilla.send(`Servidor Vanilla foi encerrado com o código: ${code}`);
       });
     } else if (interaction.customId === 'serverVanilla') {
       if (!interaction.replied) {
@@ -239,10 +243,10 @@ client.on('interactionCreate', async (interaction) => {
       }
     }
 
-    // Bot�o para iniciar o Servidor Mod
+    // Botão para iniciar o Servidor Mod
     if (interaction.customId === 'serverMod' && !serverModProcess) {
-      const serverModPath = '/home/ubuntu/minecraftModpack';
-      const scriptName = 'run.sh';
+      const serverModPath = modpackDirectory;
+      const scriptName = modpackScript;
       serverModProcess = spawn('bash', [scriptName], { cwd: serverModPath, env: { LANG: 'en_US.UTF-8' } });
 
       await interaction.reply({ content: 'Iniciando o Servidor Mod...' });
