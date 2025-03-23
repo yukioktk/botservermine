@@ -7,9 +7,7 @@ module.exports = (client) => {
 
     if (message.content === '!help') {
       const embed = new EmbedBuilder()
-      .setAuthor({
-        name: "Comandos",
-      })
+      .setTitle("Comandos")
       .addFields(
         {
           name: "Servidor de Minecraft",
