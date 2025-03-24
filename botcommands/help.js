@@ -2,7 +2,7 @@ const { EmbedBuilder } = require('discord.js');
 
 module.exports = (client) => {
   client.on('messageCreate', async (message) => {
-    // Certifique-se de que a fun��o seja declarada como ass�ncrona
+    // Certifique-se de que a função seja declarada como assíncrona
     if (message.author.bot) return;
 
     if (message.content === '!help') {

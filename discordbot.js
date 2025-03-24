@@ -263,7 +263,7 @@ client.on('interactionCreate', async (interaction) => {
 
       serverModProcess.on('close', (code) => {
         serverModProcess = null;
-        logChannelServerMod.send(`Servidor Mod foi encerrado com o c�digo: ${code}`);
+        logChannelServerMod.send(`Servidor Mod foi encerrado com o código: ${code}`);
       });
     } else if (interaction.customId === 'serverMod') {
       if (!interaction.replied) {
@@ -271,7 +271,7 @@ client.on('interactionCreate', async (interaction) => {
       }
     }
 
-    // Bot�es para parar os servidores
+    // Botões para parar os servidores
     if (interaction.customId === 'stop_serverVanilla' && serverVanillaProcess) {
       serverVanillaProcess.stdin.write('stop\n');
       serverVanillaProcess.stdin.end();
@@ -292,14 +292,14 @@ client.on('interactionCreate', async (interaction) => {
       }
     }
   } catch (error) {
-    console.error('Erro ao processar a intera��o:', error);
+    console.error('Erro ao processar a interação:', error);
     if (!interaction.deferred && !interaction.replied) {
-      await interaction.reply({ content: 'Ocorreu um erro ao processar a intera��o.', flags: MessageFlags.Ephemeral });
+      await interaction.reply({ content: 'Ocorreu um erro ao processar a interação.', flags: MessageFlags.Ephemeral });
     }
   }
 });
 
-// Agendar o envio peri�dico dos logs agregados a cada 1 segundo
+// Agendar o envio periódico dos logs agregados a cada 1 segundo
 setInterval(async () => {
   try {
     const logChannelServerVanilla = await client.channels.fetch(channelIdServerVanilla);

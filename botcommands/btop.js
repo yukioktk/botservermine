@@ -6,14 +6,14 @@ const {
   EmbedBuilder 
 } = require('discord.js');
 
-// FunÁ„o para criar uma barra de progresso usando caracteres ASCII
+// Fun√ß√£o para criar uma barra de progresso usando caracteres ASCII
 function createProgressBar(percentage, size = 20) {
   const complete = Math.round((percentage / 100) * size);
   const incomplete = size - complete;
   return '#'.repeat(complete) + '-'.repeat(incomplete);
 }
 
-// FunÁ„o que coleta e formata as mÈtricas do sistema
+// Fun√ß√£o que coleta e formata as m√©tricas do sistema
 async function getSystemStats() {
   const cpuData = await si.currentLoad();
   const memData = await si.mem();
@@ -21,8 +21,8 @@ async function getSystemStats() {
 
   // Coleta o uptime usando systeminformation
   const uptimeSeconds = si.time().uptime; // Tempo de atividade do sistema em segundos
-  const uptimeHours = Math.floor(uptimeSeconds / 3600) || 0; // Garante valor numÈrico
-  const uptimeMinutes = Math.floor((uptimeSeconds % 3600) / 60) || 0; // Garante valor numÈrico
+  const uptimeHours = Math.floor(uptimeSeconds / 3600) || 0; // Garante valor num√©rico
+  const uptimeMinutes = Math.floor((uptimeSeconds % 3600) / 60) || 0; // Garante valor num√©rico
   const uptimeText = `${uptimeHours} horas e ${uptimeMinutes} minutos`;
 
   const cpuUsage = cpuData.currentLoad.toFixed(1);
@@ -76,7 +76,7 @@ module.exports = (client) => {
             .setTimestamp();
           await statsMessage.edit({ embeds: [statsEmbed], components: [row] });
         } catch (err) {
-          console.error('Erro ao obter estatÌsticas:', err);
+          console.error('Erro ao obter estat√°sticas:', err);
         }
       };
 
@@ -115,7 +115,7 @@ module.exports = (client) => {
           await interaction.deferUpdate();
         }
       } else {
-        console.log('Monitoramento j· foi finalizado, ignorando interaÁ„o.');
+        console.log('Monitoramento j√° foi finalizado, ignorando intera√ß√£o.');
       }
     }
   });
