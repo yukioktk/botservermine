@@ -9,6 +9,12 @@ Mostrar estatísticas dos jogadores pelos arquivos do mundo, como playerdata e s
 Monitorar os recursos do host com !btop
 
 
+## Requisitos
+Node.js\
+npm
+```
+npm install discord.js dotenv systeminformation nbt
+```
 ## Instalação
 Faça o download da [Release](https://github.com/yukioktk/botservermine/releases) mais recente\
 Na pasta do servidor de Minecraft, crie um .sh para iniciar o servidor, exemplo:  (Em servidores Forge não é necessário, basta inserir o run.sh no .env)
