@@ -13,7 +13,7 @@ Monitorar os recursos do host com !btop
 Node.js\
 npm
 ```
-npm install discord.js dotenv systeminformation nbt
+npm install discord.js dotenv systeminformation nbt node-fetch@2
 ```
 ## Instalação
 Faça o download da [Release](https://github.com/yukioktk/botservermine/releases) mais recente\
