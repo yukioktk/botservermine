@@ -11,7 +11,7 @@ Monitorar os recursos do host com !btop
 
 
 ## Requisitos
-Node.js\
+Node.js
 ```
 npm install discord.js dotenv systeminformation nbt node-fetch@2
 ```
