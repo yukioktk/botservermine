@@ -2,6 +2,7 @@ Bot de Discord para administrar um servidor de Minecraft Vanilla, e um servidor 
 
 Procurei muito e não achei nenhum bot com as funções que eu queria, então eu mesmo fiz usando IA, com pouco conhecimento em JavaScript e criação de bots de Discord\
 *ainda precisei fazer diversos ajustes manualmente e estudar um pouco porque a IA é imbecil*
+Algum dia eu refaço o código do zero sem IA
 
 ## Features
 Iniciar ou parar o servidor selecionado com !start ou !stop\
