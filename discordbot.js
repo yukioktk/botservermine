@@ -36,8 +36,6 @@ function handleServerButton(interaction) {
 global.handleServerButton = handleServerButton;
 
 
-
-
 // Variáveis para armazenar os processos dos servidores
 let serverVanillaProcess = null;
 let serverModProcess = null;
@@ -95,6 +93,23 @@ async function enviarBuffer(channel, bufferName) {
     }
   }
 }
+
+// Monitoramento 0 jogadores online
+function iniciarMonitoramentoDePlayers(ip, canal, tipoServidor) {
+  const intervalo = setInterval(async () => {
+    try {
+      const status = await getServerStatus(ip);
+      if (status.online && status.players?.online === 0) {
+        await canal.send(`⚠️ Nenhum jogador online no servidor **${tipoServidor}**.\nUse ${prefix}stop para desligar`);
+      }
+    } catch (err) {
+      console.error(`Erro ao verificar jogadores no servidor ${tipoServidor}:`, err);
+    }
+  }, 3600000); // 1 hora em milissegundos
+
+  return intervalo;
+}
+
 
 // --------------------------------------------------
 // Codificação utf-8
@@ -191,10 +206,10 @@ client.on('messageCreate', async (message) => {
       .setTitle('Status dos Servidores Minecraft')
       .addFields(
         { name: 'Servidor Vanilla', value: vanillaStatus.online ? 
-          `Jogadores Online: ${vanillaStatus.players.online}\n${vanillaStatus.version}\nIP: ${serverVanillaIP}\nBluemap: http://64.181.177.19:8100/` :
+          `Jogadores Online: ${vanillaStatus.players.online}\nVersão: ${vanillaStatus.version}\nIP: ${serverVanillaIP}\nBluemap: http://64.181.177.19:8100/` :
           'Servidor Offline\n``!start`` para ligar' },
         { name: 'Servidor Mod', value: modStatus.online ? 
-          `Jogadores Online: ${modStatus.players.online}\n${modStatus.version}\nIP: ${serverModIP}\nBluemap: http://64.181.177.19:8101/` :
+          `Jogadores Online: ${modStatus.players.online}\nVersão: ${modStatus.version}\nIP: ${serverModIP}\nBluemap: http://64.181.177.19:8101/` :
           'Servidor Offline\n``!start`` para ligar' }
       )
       .setColor(embedColor);
@@ -227,6 +242,9 @@ client.on('interactionCreate', async (interaction) => {
 
       await interaction.reply({ content: 'Iniciando o Servidor Vanilla...' });
 
+      const monitorVanilla = iniciarMonitoramentoDePlayers(serverVanillaIP, interaction.channel, 'Vanilla'); // Monitoramento 0 jogadores online
+      serverVanillaProcess.monitorInterval = monitorVanilla; // Monitoramento 0 jogadores online
+
       serverVanillaProcess.stdout.on('data', (data) => {
         console.log(`Servidor Vanilla - STDOUT: ${data}`);
         adicionarNoBuffer('vanilla', data);
@@ -238,6 +256,9 @@ client.on('interactionCreate', async (interaction) => {
       });
 
       serverVanillaProcess.on('close', (code) => {
+        if (serverVanillaProcess?.monitorInterval) {  // parar monitoramento 0 jogadores online
+         clearInterval(serverVanillaProcess.monitorInterval); // parar monitoramento 0 jogadores online
+        }
         serverVanillaProcess = null;
         logChannelServerVanilla.send(`Servidor Vanilla foi encerrado com o código: ${code}`);
       });
@@ -255,6 +276,9 @@ client.on('interactionCreate', async (interaction) => {
 
       await interaction.reply({ content: 'Iniciando o Servidor Mod...' });
 
+      const monitorMod = iniciarMonitoramentoDePlayers(serverModIP, interaction.channel, 'Modpack'); // Monitoramento 0 jogadores online
+      serverModProcess.monitorInterval = monitorMod; // Monitoramento 0 jogadores online
+
       serverModProcess.stdout.on('data', (data) => {
         console.log(`Servidor Mod - STDOUT: ${data}`);
         adicionarNoBuffer('mod', data);
@@ -266,6 +290,9 @@ client.on('interactionCreate', async (interaction) => {
       });
 
       serverModProcess.on('close', (code) => {
+        if (serverModProcess?.monitorInterval) { // parar o monitoramento 0 jogadores online
+        clearInterval(serverModProcess.monitorInterval); // parar o monitoramento 0 jogadores online
+        }
         serverModProcess = null;
         logChannelServerMod.send(`Servidor Mod foi encerrado com o código: ${code}`);
       });
@@ -279,6 +306,11 @@ client.on('interactionCreate', async (interaction) => {
     if (interaction.customId === 'stop_serverVanilla' && serverVanillaProcess) {
       serverVanillaProcess.stdin.write('stop\n');
       serverVanillaProcess.stdin.end();
+
+      if (serverVanillaProcess.monitorInterval) { // parar o monitoramento 0 jogadores online
+        clearInterval(serverVanillaProcess.monitorInterval); // parar o monitoramento 0 jogadores online
+      }
+
       serverVanillaProcess = null;
       if (!interaction.replied) {
         await interaction.reply({ content: 'Comando "stop" enviado para o Servidor Vanilla.' });
@@ -286,6 +318,11 @@ client.on('interactionCreate', async (interaction) => {
     } else if (interaction.customId === 'stop_serverMod' && serverModProcess) {
       serverModProcess.stdin.write('stop\n');
       serverModProcess.stdin.end();
+
+        if (serverModProcess.monitorInterval) { // parar o monitoramento 0 jogadores online
+          clearInterval(serverModProcess.monitorInterval); // para o monitoramento 0 jogadores online
+        }
+
       serverModProcess = null;
       if (!interaction.replied) {
         await interaction.reply({ content: 'Comando "stop" enviado para o Servidor Mod.' });
