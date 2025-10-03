@@ -1,12 +1,14 @@
 const { EmbedBuilder } = require('discord.js');
 
-module.exports = (client) => {
+module.exports = (client, prefix) => {
   client.on('messageCreate', async (message) => {
     // Ignora mensagens de outros bots
     if (message.author.bot) return;
+    
+    const command = message.content.slice(prefix.length).toLowerCase().trim();
 
-    // Detecta o comando "!ping"
-    if (message.content === '!ping') {
+    // Detecta o comando "ping"
+    if (command === `ping`) {
       // Mede o tempo inicial antes de responder
       const startTime = Date.now();
 

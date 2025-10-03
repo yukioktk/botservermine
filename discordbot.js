@@ -19,11 +19,11 @@ const modpackScript = (process.env.MODPACK_SCRIPT);             // Script para i
 const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] });
 
 
-require('./botcommands/btop')(client);
+require('./botcommands/btop')(client, prefix);
 require('./botcommands/buttonconflicts')(client);
-require('./botcommands/help')(client);
-require('./botcommands/ping')(client);
-require('./botcommands/playerStatistics')(client);
+require('./botcommands/help')(client, prefix);
+require('./botcommands/ping')(client, prefix);
+require('./botcommands/playerStatistics')(client, prefix);
 
 
 // Listner buttons
@@ -201,7 +201,11 @@ client.on('messageCreate', async (message) => {
 
     message.channel.send({ embeds: [statusEmbed] });
   }
+  if (command === 'ip') { // Comando para mostrar os IPs dos servidores
+  message.channel.send({content: '**Vanilla**: '+ serverVanillaIP+'\n**Modpack**: '+ serverModIP,});
+  }
 });
+
 
 client.on('interactionCreate', async (interaction) => {
   if (!interaction.isButton()) return;

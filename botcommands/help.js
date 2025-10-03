@@ -1,17 +1,19 @@
 const { EmbedBuilder } = require('discord.js');
 
-module.exports = (client) => {
+module.exports = (client, prefix) => {
   client.on('messageCreate', async (message) => {
     // Certifique-se de que a função seja declarada como assíncrona
     if (message.author.bot) return;
+    
+    const command = message.content.slice(prefix.length).toLowerCase().trim();
 
-    if (message.content === '!help') {
+    if (command === 'help') {
       const embed = new EmbedBuilder()
       .setTitle("Comandos")
       .addFields(
         {
           name: "Servidor de Minecraft",
-          value: "**status**: Detalhes dos servidores de Minecraft ||[API](https://api.mcsrvstat.us/)||\n**start**: Iniciar o servidor de Minecraft\n**stop**: Desligar o servidor de Minecraft",
+          value: "**status**: Detalhes dos servidores de Minecraft ||[API](https://api.mcsrvstat.us/)||\n**ip**: IP's dos servidores\n**start**: Iniciar o servidor de Minecraft\n**stop**: Desligar o servidor de Minecraft",
           inline: false
         },
         {

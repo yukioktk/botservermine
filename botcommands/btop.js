@@ -46,11 +46,14 @@ async function getSystemStats() {
 
 const btopMonitors = new Map();
 
-module.exports = (client) => {
+module.exports = (client, prefix) => {
   client.on('messageCreate', async (message) => {
     if (message.author.bot) return;
     
-    if (message.content === '!btop') {
+    const command = message.content.slice(prefix.length).toLowerCase().trim();
+
+    
+    if (command === 'btop') {
       const statsMessage = await message.channel.send({
         embeds: [new EmbedBuilder().setDescription('Carregando monitor de recursos...')]
       });
