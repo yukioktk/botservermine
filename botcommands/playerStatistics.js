@@ -24,18 +24,17 @@ function saveMapping(mapping) {
   }
 }
 
-module.exports = (client) => {
+module.exports = (client, prefix) => {
   client.on('messageCreate', async (message) => {
     if (message.author.bot) return;
-    if (!message.content.startsWith('!')) return;
 
-    const args = message.content.trim().split(/\s+/);
+    const args = message.content.slice(prefix.length).trim().split(/\s+/);
     const command = args.shift().toLowerCase();
 
     // Comando !uuid
-    if (command === '!uuid') {
+    if (command === 'uuid') {
       if (args.length < 3) { // Verifica os argumentos
-        message.channel.send("Uso incorreto. Exemplo: `!uuid <uuid> <nome> <userIDdiscord>`");
+        message.channel.send(`Para registrar um usuário com a UUID do Minecraft, use:\n\`${prefix}uuid <UUID> <Nickname> <userIDdiscord>\`\n Em servidores offline, acesse o <https://minecraft-serverlist.com/tools/offline-uuid>`);
         return;
       }
       const uuid = args[0];
@@ -52,9 +51,9 @@ module.exports = (client) => {
 
 
     // Comando !uuiddelete
-if (command === '!uuiddelete') {
+if (command === 'uuiddelete') {
   if (args.length < 1) {
-    message.channel.send("Uso incorreto. Exemplo: `!uuiddelete <uuid>`");
+    message.channel.send(`Uso incorreto. Exemplo: \`${prefix}uuiddelete <uuid>\``);
     return;
   }
   const uuid = args[0];
@@ -75,7 +74,7 @@ if (command === '!uuiddelete') {
 
 
     // Comando !uuidmapping
-if (command === '!uuidmapping') {
+if (command === 'uuidmapping') {
   const mapping = loadMapping();
   const entries = Object.entries(mapping);
   if (entries.length === 0) {
@@ -100,7 +99,7 @@ if (command === '!uuidmapping') {
 
 
     // Comando !player
-    if (command === '!player') {
+    if (command === 'player') {
       const serverSelectMenu = new ActionRowBuilder().addComponents(
         new StringSelectMenuBuilder()
           .setCustomId('serverSelect')
