@@ -5,10 +5,26 @@ Procurei muito e não achei nenhum bot com as funções que eu queria, então eu
 Algum dia eu refaço o código do zero sem IA
 
 ## Features
-Iniciar ou parar o servidor selecionado com !start ou !stop\
-Mostrar detalhes do servidor pela [API](https://api.mcsrvstat.us/) com !status\
-Mostrar estatísticas dos jogadores pelos arquivos do mundo, como playerdata e stats, com !player (é necessário registrar a uuid dos jogadores com !uuid)\
-Monitorar os recursos do host com !btop
+<details>
+<summary>Iniciar ou parar o servidor selecionado com !start ou !stop</summary>
+<img width="436" height="167" alt="image" src="https://github.com/user-attachments/assets/854e4d1c-b017-4b1f-a99c-61a35b5b9ce0" />
+</details>
+
+<details>
+  <summary>Mostrar detalhes do servidor pelo https://api.mcsrvstat.us/ com !status</summary>
+<img width="397" height="308" alt="image" src="https://github.com/user-attachments/assets/6691aada-4199-49cd-8f0f-f2e641c75dea" />
+</details>
+
+<details>
+  <summary>Mostrar estatísticas dos jogadores pelos arquivos do mundo, como playerdata e stats, com !player</summary>
+<img width="487" height="421" alt="image" src="https://github.com/user-attachments/assets/aca18209-5662-4c6c-9ff8-5e45d72fc795" />
+</details>
+
+<details>
+  <summary>Monitorar os recursos do host com !btop</summary>
+<img width="448" height="498" alt="image" src="https://github.com/user-attachments/assets/a5939386-7fcc-4c6d-b38a-e9e0a54cd587" />
+</details>
+
 
 
 ## Requisitos
