@@ -30,7 +30,7 @@ module.exports = (client, prefix) => {
       .setThumbnail("https://cdn.discordapp.com/avatars/1327335734327378093/29e94dde15167e91c4d4a01556fdc338.png?size=2048")
       .setColor("#00b0f4")
       .setFooter({
-        text: "_.kido",
+        text: "_kottaka",
         iconURL: "https://cdn.discordapp.com/avatars/250691091316080640/a_30062dd7db24baa621384a435bb41307.gif?size=2048",
       });
     

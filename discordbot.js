@@ -24,6 +24,8 @@ require('./botcommands/buttonconflicts')(client);
 require('./botcommands/help')(client, prefix);
 require('./botcommands/ping')(client, prefix);
 require('./botcommands/playerStatistics')(client, prefix);
+require('./botcommands/leaderboard')(client, prefix);
+
 
 
 // Listner buttons

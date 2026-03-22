@@ -99,7 +99,7 @@ if (command === 'uuidmapping') {
 
 
     // Comando !player
-    if (command === 'player') {
+    if (command === 'player' || command === 'players') {
       const serverSelectMenu = new ActionRowBuilder().addComponents(
         new StringSelectMenuBuilder()
           .setCustomId('serverSelect')
