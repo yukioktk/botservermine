@@ -1,24 +1,21 @@
 const { Client, GatewayIntentBits, ActionRowBuilder, ButtonBuilder, ButtonStyle, ActivityType, EmbedBuilder, MessageFlags } = require('discord.js');
 const { spawn } = require('child_process');
 const fetch = require('node-fetch');
-
 require("dotenv").config();
 
-// Configurações do bot
-const token = (process.env.BOT_TOKEN); // Token
+const token = process.env.BOT_TOKEN;
 const prefix = '!';
-const channelIdServerVanilla = (process.env.ID_CONSOLE_VANILLA); // Canal de log do Servidor Vanilla
-const channelIdServerMod = (process.env.ID_CONSOLE_MODPACK);   // Canal de log do Servidor Mod
-const serverVanillaIP = (process.env.VANILLA_IP);              // IP do servidor Vanilla
-const serverModIP = (process.env.MODPACK_IP);             // IP do servidor Mod
-const vanillaDirectory = (process.env.VANILLA_DIRECTORY);             // Diretório do servidor Vanilla
-const modpackDirectory = (process.env.MODPACK_DIRECTORY);             // Diretório do servidor Modpack
-const vanillaScript = (process.env.VANILLA_SCRIPT);             // Script para iniciar o servidor Vanilla (.sh)
-const modpackScript = (process.env.MODPACK_SCRIPT);             // Script para iniciar o servidor Modpack (.sh)
 
-const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] });
+// Criação do client
+const client = new Client({
+  intents: [
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMessages,
+    GatewayIntentBits.MessageContent
+  ]
+});
 
-
+// Conectar comandos da pasta botcommands
 require('./botcommands/btop')(client, prefix);
 require('./botcommands/buttonconflicts')(client);
 require('./botcommands/help')(client, prefix);
@@ -26,69 +23,62 @@ require('./botcommands/ping')(client, prefix);
 require('./botcommands/playerStatistics')(client, prefix);
 require('./botcommands/leaderboard')(client, prefix);
 
-
-
-// Listner buttons
-function handleServerButton(interaction) {
-  // ... Sua lógica para os botões dos servidores ...
-  // Por exemplo, se interaction.customId for 'serverVanilla', etc.
-}
-
-// Definindo de forma global para ser acessível no buttonconflicts.js:
-global.handleServerButton = handleServerButton;
-
-
-// Variáveis para armazenar os processos dos servidores
-let serverVanillaProcess = null;
-let serverModProcess = null;
-
 // --------------------------------------------------
-// Buffer de logs para juntar as mensagens e evitar rate limiting
-const logBuffers = {
-  vanilla: [],
-  mod: []
-};
+// Lista de servidores
+const servers = [
+  {
+    id: 'vanilla',
+    name: 'Servidor Vanilla',
+    ip: process.env.VANILLA_IP,
+    directory: process.env.VANILLA_DIRECTORY,
+    script: process.env.VANILLA_SCRIPT,
+    channelId: process.env.ID_CONSOLE_VANILLA,
+    bluemap: 'http://64.181.177.19:8100/'
+  },
+  {
+    id: 'mod',
+    name: 'Servidor Modpack',
+    ip: process.env.MODPACK_IP,
+    directory: process.env.MODPACK_DIRECTORY,
+    script: process.env.MODPACK_SCRIPT,
+    channelId: process.env.ID_CONSOLE_MODPACK,
+    bluemap: 'http://64.181.177.19:8101/'
+  }
+];
 
-// Função para dividir mensagens longas, respeitando o limite do Discord (2000 caracteres)
+// Processos ativos
+let serverProcesses = {};
+const logBuffers = {};
+
+// Funções utilitárias
 function splitMessage(content, maxLength = 2000) {
   const parts = [];
   while (content.length > maxLength) {
     let splitIndex = content.lastIndexOf('\n', maxLength);
-    if (splitIndex === -1 || splitIndex < maxLength / 2) {
-      splitIndex = maxLength;
-    }
+    if (splitIndex === -1 || splitIndex < maxLength / 2) splitIndex = maxLength;
     parts.push(content.slice(0, splitIndex));
     content = content.slice(splitIndex);
   }
-  if (content.length > 0) {
-    parts.push(content);
-  }
+  if (content.length > 0) parts.push(content);
   return parts;
 }
 
-// Função para adicionar os logs ao buffer, dividindo-os se necessário
-function adicionarNoBuffer(bufferName, data) {
+function adicionarNoBuffer(serverId, data) {
   const log = data.toString();
-  const parts = splitMessage(log, 1900); // margem para garantir a formatação no bloco de código
-  logBuffers[bufferName].push(...parts);
+  const parts = splitMessage(log, 1900);
+  if (!logBuffers[serverId]) logBuffers[serverId] = [];
+  logBuffers[serverId].push(...parts);
 }
 
-// Função para enviar os logs acumulados do buffer para o canal
-async function enviarBuffer(channel, bufferName) {
-  const buffer = logBuffers[bufferName];
+async function enviarBuffer(channel, serverId) {
+  const buffer = logBuffers[serverId] || [];
   if (buffer.length === 0) return;
-
-  // Agrega todas as entradas do buffer em uma única string
   const allLogs = buffer.join('\n');
-  // Limpa o buffer imediatamente para tratar novos logs
-  logBuffers[bufferName] = [];
-
+  logBuffers[serverId] = [];
   const mensagemCompleta = `\`\`\`\n${allLogs}\n\`\`\``;
-
   if (mensagemCompleta.length <= 2000) {
     await channel.send(mensagemCompleta);
   } else {
-    // Caso ultrapasse o limite, divide novamente a mensagem
     const parts = splitMessage(allLogs, 1900);
     for (const part of parts) {
       await channel.send(`\`\`\`\n${part}\n\`\`\``);
@@ -96,55 +86,59 @@ async function enviarBuffer(channel, bufferName) {
   }
 }
 
-// Monitoramento 0 jogadores online
-function iniciarMonitoramentoDePlayers(ip, canal, tipoServidor) {
-  const intervalo = setInterval(async () => {
-    try {
-      const status = await getServerStatus(ip);
-      if (status.online && status.players?.online === 0) {
-        await canal.send(`⚠️ Nenhum jogador online no servidor **${tipoServidor}**.\nUse ${prefix}stop para desligar`);
-      }
-    } catch (err) {
-      console.error(`Erro ao verificar jogadores no servidor ${tipoServidor}:`, err);
-    }
-  }, 3600000); // 1 hora em milissegundos
-
-  return intervalo;
-}
-
-
-// --------------------------------------------------
-// Codificação utf-8
-process.stdin.setEncoding('utf8');
-process.stdout.setEncoding('utf8');
-process.stderr.setEncoding('utf8');
-
-client.once('ready', () => {
-  console.log(`Bot online como ${client.user.tag}!`);
-  // Rich Presence
-  client.user.setActivity({
-    name: '!help',
-    type: ActivityType.Listening,
-  });
-});
-
-// Função que consulta o status do servidor via API
 async function getServerStatus(ip) {
   const response = await fetch(`https://api.mcsrvstat.us/3/${ip}`);
-  const data = await response.json();
-  return data;
+  return await response.json();
 }
 
+function startServer(server, interaction) {
+  const proc = spawn('bash', [server.script], { cwd: server.directory, env: { LANG: 'en_US.UTF-8' } });
+  serverProcesses[server.id] = proc;
+  interaction.reply({ content: `Iniciando ${server.name}...` });
+
+  proc.stdout.on('data', data => {
+    console.log(`[${server.name}] ${data.toString()}`);
+    adicionarNoBuffer(server.id, data);
+  });
+
+  proc.stderr.on('data', data => {
+    console.error(`[${server.name} ERRO] ${data.toString()}`);
+    adicionarNoBuffer(server.id, `[ERRO] ${data}`);
+  });
+
+  proc.on('close', code => {
+    serverProcesses[server.id] = null;
+    interaction.channel.send(`${server.name} foi encerrado com o código: ${code}`);
+  });
+}
+
+function stopServer(server, interaction) {
+  const proc = serverProcesses[server.id];
+  if (proc) {
+    proc.stdin.write('stop\n');
+    proc.stdin.end();
+    serverProcesses[server.id] = null;
+    interaction.reply({ content: `${server.name} desligado.` });
+  }
+}
+
+// --------------------------------------------------
+// Inicialização do bot
+client.once('ready', () => {
+  console.log(`Bot online como ${client.user.tag}!`);
+  client.user.setActivity({ name: '!help', type: ActivityType.Listening });
+});
+
+// Comandos e console
 client.on('messageCreate', async (message) => {
-  // Ignorar mensagens de outros bots
   if (message.author.bot) return;
 
-  // Se a mensagem não começa com o prefixo, e se estiver no canal de log, redireciona ao processo correspondente
+  // Se não começa com prefixo, trata como comando para o console do servidor
   if (!message.content.startsWith(prefix)) {
-    if (message.channel.id === channelIdServerVanilla && serverVanillaProcess) {
-      serverVanillaProcess.stdin.write(message.content + '\n');
-    } else if (message.channel.id === channelIdServerMod && serverModProcess) {
-      serverModProcess.stdin.write(message.content + '\n');
+    for (const s of servers) {
+      if (message.channel.id === s.channelId && serverProcesses[s.id]) {
+        serverProcesses[s.id].stdin.write(message.content + '\n');
+      }
     }
     return;
   }
@@ -152,206 +146,73 @@ client.on('messageCreate', async (message) => {
   const args = message.content.slice(prefix.length).trim().split(/ +/);
   const command = args.shift().toLowerCase();
 
-  // Comando para iniciar os servidores
   if (command === 'start') {
     const row = new ActionRowBuilder().addComponents(
-      new ButtonBuilder()
-        .setCustomId('serverVanilla')
-        .setLabel('Iniciar Servidor Vanilla')
-        .setStyle(ButtonStyle.Primary),
-      new ButtonBuilder()
-        .setCustomId('serverMod')
-        .setLabel('Iniciar Servidor Mod')
-        .setStyle(ButtonStyle.Primary)
+      servers.map(s => new ButtonBuilder()
+        .setCustomId(`start_${s.id}`)
+        .setLabel(`Iniciar ${s.name}`)
+        .setStyle(ButtonStyle.Primary))
     );
-
-    await message.channel.send({
-      content: 'Escolha qual servidor deseja iniciar:',
-      components: [row]
-    });
+    await message.channel.send({ content: 'Escolha qual servidor deseja iniciar:', components: [row] });
   }
 
-  // Comando para parar os servidores
   if (command === 'stop') {
-    if (serverVanillaProcess || serverModProcess) {
-      const stopRow = new ActionRowBuilder().addComponents(
-        new ButtonBuilder()
-          .setCustomId('stop_serverVanilla')
-          .setLabel('Parar Servidor Vanilla')
-          .setStyle(ButtonStyle.Danger),
-        new ButtonBuilder()
-          .setCustomId('stop_serverMod')
-          .setLabel('Parar Servidor Mod')
-          .setStyle(ButtonStyle.Danger)
-      );
-
-      await message.channel.send({
-        content: 'Escolha qual servidor deseja parar:',
-        components: [stopRow]
-      });
-    } else {
-      return message.channel.send('Nenhum servidor online');
-    }
+    const row = new ActionRowBuilder().addComponents(
+      servers.map(s => new ButtonBuilder()
+        .setCustomId(`stop_${s.id}`)
+        .setLabel(`Parar ${s.name}`)
+        .setStyle(ButtonStyle.Danger))
+    );
+    await message.channel.send({ content: 'Escolha qual servidor deseja parar:', components: [row] });
   }
 
-  // Comando para consultar o status dos servidores
   if (command === 'status') {
-    const vanillaStatus = await getServerStatus(serverVanillaIP);
-    const modStatus = await getServerStatus(serverModIP);
-
-    let embedColor = 0x00FF00; // Verde por padrão
-    if (!vanillaStatus.online && !modStatus.online) {
-      embedColor = 0xFF0000; // Vermelho se ambos estiverem offline
-    }
-
-    const statusEmbed = new EmbedBuilder()
-      .setTitle('Status dos Servidores Minecraft')
-      .addFields(
-        { name: 'Servidor Vanilla', value: vanillaStatus.online ? 
-          `Jogadores Online: ${vanillaStatus.players.online}\nVersão: ${vanillaStatus.version}\nIP: ${serverVanillaIP}\nBluemap: http://64.181.177.19:8100/` :
-          'Servidor Offline\n``!start`` para ligar' },
-        { name: 'Servidor Mod', value: modStatus.online ? 
-          `Jogadores Online: ${modStatus.players.online}\nVersão: ${modStatus.version}\nIP: ${serverModIP}\nBluemap: http://64.181.177.19:8101/` :
-          'Servidor Offline\n``!start`` para ligar' }
-      )
-      .setColor(embedColor);
-
-    message.channel.send({ embeds: [statusEmbed] });
+    const statuses = await Promise.all(servers.map(s => getServerStatus(s.ip)));
+    const embed = new EmbedBuilder().setTitle('Status dos Servidores Minecraft');
+    servers.forEach((s, i) => {
+      const st = statuses[i];
+      embed.addFields({
+        name: s.name,
+        value: st.online ? 
+          `Jogadores Online: ${st.players.online}\nVersão: ${st.version}\nIP: ${s.ip}\nBluemap: ${s.bluemap}` :
+          'Servidor Offline\n``!start`` para ligar'
+      });
+    });
+    embed.setColor(statuses.every(st => !st.online) ? 0xFF0000 : 0x00FF00);
+    message.channel.send({ embeds: [embed] });
   }
-  if (command === 'ip') { // Comando para mostrar os IPs dos servidores
-  message.channel.send({content: '**Vanilla**: '+ serverVanillaIP+'\n**Modpack**: '+ serverModIP,});
+
+  if (command === 'ip') {
+    const ips = servers.map(s => `**${s.name}**: ${s.ip}`).join('\n');
+    message.channel.send({ content: ips });
   }
 });
 
-
+// Botões
 client.on('interactionCreate', async (interaction) => {
   if (!interaction.isButton()) return;
+  const [action, serverId] = interaction.customId.split('_');
+  const server = servers.find(s => s.id === serverId);
+  if (!server) return;
 
-    const serverButtons = ['serverVanilla', 'serverMod', 'stop_serverVanilla', 'stop_serverMod'];
-    if (!serverButtons.includes(interaction.customId)) return; // Se não for um desses botões, sai e permite que outro listener (por exemplo, o do btop) trate
-
-
-  try {
-    const logChannelServerVanilla = await client.channels.fetch(channelIdServerVanilla);
-    const logChannelServerMod = await client.channels.fetch(channelIdServerMod);
-
-
-    // Botão para iniciar o Servidor Vanilla
-    if (interaction.customId === 'serverVanilla' && !serverVanillaProcess) {
-      const serverVanillaPath = vanillaDirectory;
-      const scriptName = vanillaScript;
-      serverVanillaProcess = spawn('bash', [scriptName], { cwd: serverVanillaPath, env: { LANG: 'en_US.UTF-8' } });
-
-      await interaction.reply({ content: 'Iniciando o Servidor Vanilla...' });
-
-      const monitorVanilla = iniciarMonitoramentoDePlayers(serverVanillaIP, interaction.channel, 'Vanilla'); // Monitoramento 0 jogadores online
-      serverVanillaProcess.monitorInterval = monitorVanilla; // Monitoramento 0 jogadores online
-
-      serverVanillaProcess.stdout.on('data', (data) => {
-        console.log(`Servidor Vanilla - STDOUT: ${data}`);
-        adicionarNoBuffer('vanilla', data);
-      });
-
-      serverVanillaProcess.stderr.on('data', (data) => {
-        console.log(`Servidor Vanilla - STDERR: ${data}`);
-        adicionarNoBuffer('vanilla', `[ERRO] ${data}`);
-      });
-
-      serverVanillaProcess.on('close', (code) => {
-        if (serverVanillaProcess?.monitorInterval) {  // parar monitoramento 0 jogadores online
-         clearInterval(serverVanillaProcess.monitorInterval); // parar monitoramento 0 jogadores online
-        }
-        serverVanillaProcess = null;
-        logChannelServerVanilla.send(`Servidor Vanilla foi encerrado com o código: ${code}`);
-      });
-    } else if (interaction.customId === 'serverVanilla') {
-      if (!interaction.replied) {
-        await interaction.reply({ content: 'Servidor Vanilla online', flags: MessageFlags.Ephemeral });
-      }
-    }
-
-    // Botão para iniciar o Servidor Mod
-    if (interaction.customId === 'serverMod' && !serverModProcess) {
-      const serverModPath = modpackDirectory;
-      const scriptName = modpackScript;
-      serverModProcess = spawn('bash', [scriptName], { cwd: serverModPath, env: { LANG: 'en_US.UTF-8' } });
-
-      await interaction.reply({ content: 'Iniciando o Servidor Mod...' });
-
-      const monitorMod = iniciarMonitoramentoDePlayers(serverModIP, interaction.channel, 'Modpack'); // Monitoramento 0 jogadores online
-      serverModProcess.monitorInterval = monitorMod; // Monitoramento 0 jogadores online
-
-      serverModProcess.stdout.on('data', (data) => {
-        console.log(`Servidor Mod - STDOUT: ${data}`);
-        adicionarNoBuffer('mod', data);
-      });
-
-      serverModProcess.stderr.on('data', (data) => {
-        console.log(`Servidor Mod - STDERR: ${data}`);
-        adicionarNoBuffer('mod', `[ERRO] ${data}`);
-      });
-
-      serverModProcess.on('close', (code) => {
-        if (serverModProcess?.monitorInterval) { // parar o monitoramento 0 jogadores online
-        clearInterval(serverModProcess.monitorInterval); // parar o monitoramento 0 jogadores online
-        }
-        serverModProcess = null;
-        logChannelServerMod.send(`Servidor Mod foi encerrado com o código: ${code}`);
-      });
-    } else if (interaction.customId === 'serverMod') {
-      if (!interaction.replied) {
-        await interaction.reply({ content: 'Servidor Mod online', flags: MessageFlags.Ephemeral });
-      }
-    }
-
-    // Botões para parar os servidores
-    if (interaction.customId === 'stop_serverVanilla' && serverVanillaProcess) {
-      serverVanillaProcess.stdin.write('stop\n');
-      serverVanillaProcess.stdin.end();
-
-      if (serverVanillaProcess.monitorInterval) { // parar o monitoramento 0 jogadores online
-        clearInterval(serverVanillaProcess.monitorInterval); // parar o monitoramento 0 jogadores online
-      }
-
-      serverVanillaProcess = null;
-      if (!interaction.replied) {
-        await interaction.reply({ content: 'Comando "stop" enviado para o Servidor Vanilla.' });
-      }
-    } else if (interaction.customId === 'stop_serverMod' && serverModProcess) {
-      serverModProcess.stdin.write('stop\n');
-      serverModProcess.stdin.end();
-
-        if (serverModProcess.monitorInterval) { // parar o monitoramento 0 jogadores online
-          clearInterval(serverModProcess.monitorInterval); // para o monitoramento 0 jogadores online
-        }
-
-      serverModProcess = null;
-      if (!interaction.replied) {
-        await interaction.reply({ content: 'Comando "stop" enviado para o Servidor Mod.' });
-      }
-    } else {
-      if (!interaction.replied) {
-        await interaction.reply({ content: 'Servidor offline', flags: MessageFlags.Ephemeral });
-      }
-    }
-  } catch (error) {
-    console.error('Erro ao processar a interação:', error);
-    if (!interaction.deferred && !interaction.replied) {
-      await interaction.reply({ content: 'Ocorreu um erro ao processar a interação.', flags: MessageFlags.Ephemeral });
-    }
+  if (action === 'start' && !serverProcesses[server.id]) {
+    startServer(server, interaction);
+  } else if (action === 'stop' && serverProcesses[server.id]) {
+    stopServer(server, interaction);
+  } else {
+    interaction.reply({ content: 'Servidor já está nesse estado.', flags: MessageFlags.Ephemeral });
   }
 });
 
-// Agendar o envio periódico dos logs agregados a cada 1 segundo
+// Logs periódicos
 setInterval(async () => {
-  try {
-    const logChannelServerVanilla = await client.channels.fetch(channelIdServerVanilla);
-    const logChannelServerMod = await client.channels.fetch(channelIdServerMod);
-
-    await enviarBuffer(logChannelServerVanilla, 'vanilla');
-    await enviarBuffer(logChannelServerMod, 'mod');
-  } catch (error) {
-    console.error('Erro ao enviar os logs do buffer:', error);
+  for (const s of servers) {
+    try {
+      const channel = await client.channels.fetch(s.channelId);
+      await enviarBuffer(channel, s.id);
+    } catch (err) {
+      console.error(`Erro ao enviar logs de ${s.name}:`, err);
+    }
   }
 }, 1000);
 
