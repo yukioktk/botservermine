@@ -12,7 +12,7 @@ const servers = [
   {
     id: 'mod',
     name: 'Servidor Modpack',
-    ip: '64.181.177.19:25566',
+    ip: '12.123.123.12:25566',
     directory: '/home/ubuntu/minecraftModpack',
     script: 'run.sh',
     channelId: '999999999999999999',

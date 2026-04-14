@@ -24,7 +24,6 @@ require('./botcommands/ping')(client, prefix);
 require('./botcommands/playerStatistics')(client, prefix);
 require('./botcommands/leaderboard')(client, prefix);
 
-// --------------------------------------------------
 // Lista de servidores
 const servers = require('./servers.js');
 
