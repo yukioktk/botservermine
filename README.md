@@ -1,4 +1,4 @@
-Bot de Discord para administrar um servidor de Minecraft Vanilla, e um servidor de Minecraft com Mods
+Bot de Discord para administrar um ou vários servidores de minecraft 
 
 Procurei muito e não achei nenhum bot com as funções que eu queria, então eu mesmo fiz usando IA, com pouco conhecimento em JavaScript e criação de bots de Discord\
 *ainda precisei fazer diversos ajustes manualmente e estudar um pouco porque a IA é imbecil*\
@@ -33,37 +33,23 @@ Node.js
 npm install discord.js dotenv systeminformation nbt node-fetch@2
 ```
 ## Instalação
-Faça o download da [Release](https://github.com/yukioktk/botservermine/releases) mais recente\
-Na pasta do servidor de Minecraft, crie um .sh para iniciar o servidor, exemplo:  (Em servidores Forge não é necessário, basta inserir o run.sh no .env)
+Na pasta do servidor de Minecraft, crie um .sh para iniciar o servidor, exemplo:
+
+OBS: Em servidores Forge não é necessário
+
 ```
 java -jar -Xmx4024M paper-1.21.3-82.jar nogui
 ```
 
+Faça o download da [Release](https://github.com/yukioktk/botservermine/releases) mais recente
 
-Crie um arquivo .env e substitua com suas informações
+Crie um arquivo .env com seu token
 ```
-BOT_TOKEN= INSIRA_SEU_TOKEN
-ID_CONSOLE_VANILLA= INSIRA_O_ID_DO_CANAL_DE_CONSOLE_DO_SERVIDOR_VANILLA_DO_DISCORD
-ID_CONSOLE_MODPACK= INSIRA_O_ID_DO_CANAL_DE_CONSOLE_DO_SERVIDOR_MODPACK_DO_DISCORD
-VANILLA_IP= IP_DO_SERVIDOR_VANILLA
-MODPACK_IP= IP_DO_SERVIDOR_MODPACK
-VANILLA_DIRECTORY= CAMINHO_PARA_O_.JAR_VANILLA
-MODPACK_DIRECTORY= CAMINHO_PARA_O_.JAR_MODPACK
-VANILLA_SCRIPT= NOME_DO_.SH_PARA_INICIAR_O_SERVER_VANILLA
-MODPACK_SCRIPT= NOME_DO_.SH_PARA_INICIAR_O_SERVER_VANILLA
+BOT_TOKEN= TOKEN_DO_BOT 
 ```
-Exemplo:
-```
-BOT_TOKEN= ASDASDDasdasddsadasasdsdasdasdsadadadadsadasdsada
-ID_CONSOLE_VANILLA= 1231231231231231231
-ID_CONSOLE_MODPACK= 1232131231231231232
-VANILLA_IP= mc.hypixel.net
-MODPACK_IP= mc.hypixel.net
-VANILLA_DIRECTORY= /home/ubuntu/minecraftVanilla
-MODPACK_DIRECTORY= /home/ubuntu/minecraftModpack
-VANILLA_SCRIPT= iniciarserver.sh
-MODPACK_SCRIPT= run.sh 
-```
+retire o .example do servers.example.js e coloque as informações dos servidores
+\
+\
 Inicie com
 ```
 node discordbot.js
