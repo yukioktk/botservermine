@@ -1,6 +1,7 @@
 const { Client, GatewayIntentBits, ActionRowBuilder, ButtonBuilder, ButtonStyle, ActivityType, EmbedBuilder, MessageFlags } = require('discord.js');
 const { spawn } = require('child_process');
 const fetch = require('node-fetch');
+const { runInContext } = require('vm');
 require("dotenv").config();
 
 const token = process.env.BOT_TOKEN;
@@ -25,26 +26,7 @@ require('./botcommands/leaderboard')(client, prefix);
 
 // --------------------------------------------------
 // Lista de servidores
-const servers = [
-  {
-    id: 'vanilla',
-    name: 'Servidor Vanilla',
-    ip: process.env.VANILLA_IP,
-    directory: process.env.VANILLA_DIRECTORY,
-    script: process.env.VANILLA_SCRIPT,
-    channelId: process.env.ID_CONSOLE_VANILLA,
-    bluemap: 'http://64.181.177.19:8100/'
-  },
-  {
-    id: 'mod',
-    name: 'Servidor Modpack',
-    ip: process.env.MODPACK_IP,
-    directory: process.env.MODPACK_DIRECTORY,
-    script: process.env.MODPACK_SCRIPT,
-    channelId: process.env.ID_CONSOLE_MODPACK,
-    bluemap: 'http://64.181.177.19:8101/'
-  }
-];
+const servers = require('./servers.js');
 
 // Processos ativos
 let serverProcesses = {};
@@ -105,11 +87,6 @@ function startServer(server, interaction) {
     console.error(`[${server.name} ERRO] ${data.toString()}`);
     adicionarNoBuffer(server.id, `[ERRO] ${data}`);
   });
-
-  proc.on('close', code => {
-    serverProcesses[server.id] = null;
-    interaction.channel.send(`${server.name} foi encerrado com o código: ${code}`);
-  });
 }
 
 function stopServer(server, interaction) {
@@ -167,20 +144,28 @@ client.on('messageCreate', async (message) => {
   }
 
   if (command === 'status') {
-    const statuses = await Promise.all(servers.map(s => getServerStatus(s.ip)));
-    const embed = new EmbedBuilder().setTitle('Status dos Servidores Minecraft');
-    servers.forEach((s, i) => {
-      const st = statuses[i];
-      embed.addFields({
-        name: s.name,
-        value: st.online ? 
-          `Jogadores Online: ${st.players.online}\nVersão: ${st.version}\nIP: ${s.ip}\nBluemap: ${s.bluemap}` :
-          'Servidor Offline\n``!start`` para ligar'
-      });
-    });
-    embed.setColor(statuses.every(st => !st.online) ? 0xFF0000 : 0x00FF00);
-    message.channel.send({ embeds: [embed] });
-  }
+  const statuses = await Promise.all(servers.map(s => getServerStatus(s.ip)));
+  const embed = new EmbedBuilder().setTitle('Status dos Servidores Minecraft');
+
+  servers.forEach((s, i) => {
+    const st = statuses[i];
+    let value;
+    if (st.online) {
+      value = `Jogadores Online: ${st.players.online}\nVersão: ${st.version}\nIP: ${s.ip}`;
+      if (s.bluemap) { // só adiciona se existir
+        value += `\nBluemap: ${s.bluemap}`;
+      }
+    } else {
+      value = 'Servidor Offline\n``!start`` para ligar';
+    }
+
+    embed.addFields({ name: s.name, value });
+  });
+
+  embed.setColor(statuses.every(st => !st.online) ? 0xFF0000 : 0x00FF00);
+  message.channel.send({ embeds: [embed] });
+}
+
 
   if (command === 'ip') {
     const ips = servers.map(s => `**${s.name}**: ${s.ip}`).join('\n');

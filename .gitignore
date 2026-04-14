@@ -1,3 +1,4 @@
 .env
 botcommands/uuid_mapping.json
 node_modules/
+servers.js
