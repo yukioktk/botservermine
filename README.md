@@ -47,7 +47,7 @@ Crie um arquivo .env com seu token
 ```
 BOT_TOKEN= TOKEN_DO_BOT 
 ```
-retire o .example do servers.example.js e coloque as informações dos servidores
+Substitua o servers.js com as informações dos servidores
 \
 \
 Inicie com
