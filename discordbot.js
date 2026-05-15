@@ -1,7 +1,6 @@
 const { Client, GatewayIntentBits, ActionRowBuilder, ButtonBuilder, ButtonStyle, ActivityType, EmbedBuilder, MessageFlags } = require('discord.js');
 const { spawn } = require('child_process');
 const fetch = require('node-fetch');
-const { runInContext } = require('vm');
 require("dotenv").config();
 
 const token = process.env.BOT_TOKEN;
@@ -30,6 +29,7 @@ const servers = require('./servers.js');
 // Processos ativos
 let serverProcesses = {};
 const logBuffers = {};
+let noPlayerTimers = {}; // tempo sem jogadores por servidor
 
 // Funções utilitárias
 function splitMessage(content, maxLength = 2000) {
@@ -103,6 +103,7 @@ function stopServer(server, interaction) {
 client.once('ready', () => {
   console.log(`Bot online como ${client.user.tag}!`);
   client.user.setActivity({ name: '!help', type: ActivityType.Listening });
+  iniciarMonitoramento(); // inicia monitoramento automático
 });
 
 // Comandos e console
@@ -143,28 +144,26 @@ client.on('messageCreate', async (message) => {
   }
 
   if (command === 'status') {
-  const statuses = await Promise.all(servers.map(s => getServerStatus(s.ip)));
-  const embed = new EmbedBuilder().setTitle('Status dos Servidores Minecraft');
+    const statuses = await Promise.all(servers.map(s => getServerStatus(s.ip)));
+    const embed = new EmbedBuilder().setTitle('Status dos Servidores Minecraft');
 
-  servers.forEach((s, i) => {
-    const st = statuses[i];
-    let value;
-    if (st.online) {
-      value = `Jogadores Online: ${st.players.online}\nVersão: ${st.version}\nIP: ${s.ip}`;
-      if (s.bluemap) { // só adiciona se existir
-        value += `\nBluemap: ${s.bluemap}`;
+    servers.forEach((s, i) => {
+      const st = statuses[i];
+      let value;
+      if (st.online) {
+        value = `Jogadores Online: ${st.players.online}\nVersão: ${st.version}\nIP: ${s.ip}`;
+        if (s.bluemap) { // só adiciona se existir
+          value += `\nBluemap: ${s.bluemap}`;
+        }
+      } else {
+        value = 'Servidor Offline\n``!start`` para ligar';
       }
-    } else {
-      value = 'Servidor Offline\n``!start`` para ligar';
-    }
+      embed.addFields({ name: s.name, value });
+    });
 
-    embed.addFields({ name: s.name, value });
-  });
-
-  embed.setColor(statuses.every(st => !st.online) ? 0xFF0000 : 0x00FF00);
-  message.channel.send({ embeds: [embed] });
-}
-
+    embed.setColor(statuses.every(st => !st.online) ? 0xFF0000 : 0x00FF00);
+    message.channel.send({ embeds: [embed] });
+  }
 
   if (command === 'ip') {
     const ips = servers.map(s => `**${s.name}**: ${s.ip}`).join('\n');
@@ -199,5 +198,42 @@ setInterval(async () => {
     }
   }
 }, 1000);
+
+// --------------------------------------------------
+// Monitoramento de jogadores
+function iniciarMonitoramento() {
+  setInterval(async () => {
+    for (const s of servers) {
+      try {
+        const status = await getServerStatus(s.ip);
+        const channel = await client.channels.fetch(s.channelId);
+
+        if (status.online) {
+          if (status.players?.online === 0) {
+            if (!noPlayerTimers[s.id]) noPlayerTimers[s.id] = 0;
+            noPlayerTimers[s.id] += 5; // incrementa 5 minutos
+
+            if (noPlayerTimers[s.id] === 30) {
+              await channel.send(`O servidor **${s.name}** está online há 30 minutos sem jogadores. Ele será desligado automaticamente em 30 minutos`);
+            }
+
+            if (noPlayerTimers[s.id] >= 60 && serverProcesses[s.id]) {
+              await channel.send(`⏹️ O servidor **${s.name}** está há 1 hora sem jogadores. Desligando...`);
+              serverProcesses[s.id].stdin.write('stop\n');
+              serverProcesses[s.id].stdin.end();
+              serverProcesses[s.id] = null;
+            }
+          } else {
+            noPlayerTimers[s.id] = 0; // reset se houver jogadores
+          }
+        } else {
+          noPlayerTimers[s.id] = 0; // reset se offline
+        }
+      } catch (err) {
+        console.error(`Erro ao monitorar ${s.name}:`, err);
+      }
+    }
+  }, 5 * 60 * 1000); // a cada 5 minutos
+}
 
 client.login(token);
