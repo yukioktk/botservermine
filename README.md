@@ -1,4 +1,4 @@
-Bot de Discord para administrar um ou vários servidores de minecraft 
+# Bot de Discord para administrar um ou vários servidores de minecraft 
 
 Procurei muito e não achei nenhum bot com as funções que eu queria, então eu mesmo fiz com ajuda de IA
 
